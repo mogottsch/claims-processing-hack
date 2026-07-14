@@ -103,8 +103,7 @@ cells in order to:
 - process the same inputs with all three approaches;
 - normalize every result into one shared claim schema;
 - compare every extracted field against supplied ground truth;
-- review accuracy, completeness, and processing time side by side; and
-- export clean JSON, raw OCR text, and a readable Markdown comparison report.
+- review accuracy, completeness, and processing time side by side.
 
 The task is complete when all three pipelines have produced a normalized result,
 the comparison table is visible, and you can explain which approach you would
