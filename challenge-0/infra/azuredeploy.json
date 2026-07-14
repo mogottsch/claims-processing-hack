@@ -18,6 +18,19 @@
       "metadata": {
         "description": "Azure location where resources should be deployed (e.g., swedencentral)"
       }
+    },
+    "containerAppsLocation": {
+      "type": "string",
+      "defaultValue": "northeurope",
+      "allowedValues": [
+        "northeurope",
+        "westeurope",
+        "germanywestcentral",
+        "swedencentral"
+      ],
+      "metadata": {
+        "description": "Azure location for the Container Apps managed environment"
+      }
     }
   },
   "variables": {
@@ -154,7 +167,7 @@
       "type": "Microsoft.App/managedEnvironments",
       "apiVersion": "2023-05-01",
       "name": "[variables('containerAppEnvironmentName')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('containerAppsLocation')]",
       "tags": "[variables('tags')]",
       "properties": {
         "appLogsConfiguration": {
@@ -255,7 +268,7 @@
       },
       "properties": {},
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiFoundryName'))]"
+        "[resourceId('Microsoft.CognitiveServices/accounts/deployments', variables('aiFoundryName'), 'mistral-document-ai-2505')]"
       ]
     },
     {
@@ -383,7 +396,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiFoundryName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts/projects', variables('aiFoundryName'), variables('aiProjectName'))]",
         "[resourceId('Microsoft.Search/searchServices', variables('searchServiceName'))]"
       ]
     }
