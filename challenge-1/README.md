@@ -88,27 +88,31 @@ A powerful multimodal model that can process both text and images with high accu
 GPT-4.1-mini offers an excellent balance between cost, speed, and performance for document processing tasks, making it ideal for processing both policy documents and visual claim evidence.
 
 ## Task 1 - Statement Processing with Multiple AI Approaches 
-The `statements_processing` folder contains advanced examples showcasing different AI approaches for processing insurance claim statements. This section demonstrates how to choose and implement the right model for your specific use case. It will also generate the markdown files needed for vectorization in the next part of the challenge:
+Compare three document-processing pipelines on the same claim statement:
 
-**GPT Statement Processing (`gpt_statement_processing.py`)**
-- Uses GPT-4-1-mini for intelligent statement analysis
-- Excels at understanding context and extracting nuanced information
-- Ideal for complex, unstructured claim narratives
-- Provides high-quality extraction with natural language understanding
+1. A multimodal GPT model extracts structured fields directly from both images.
+2. Mistral Document AI performs OCR, followed by the same GPT normalization step.
+3. Azure Document Intelligence performs layout extraction, followed by the same
+   GPT normalization step.
 
-**Mistral Document Intelligence (`mistral_doc_intelligence.py`)**
-- Leverages Mistral's specialized document AI models
-- Optimized for structured document processing at scale
-- Cost-effective for high-volume statement processing
-- Fast inference times for batch operations
+Open [`scripts/statement_processing_comparison.ipynb`](scripts/statement_processing_comparison.ipynb)
+and select the repository's Python environment as the notebook kernel. Run the
+cells in order to:
 
-**Azure Document Intelligence Integration**
-- Demonstrates prebuilt models for form and document extraction
-- Shows custom model training for insurance-specific documents
-- Provides layout analysis and key-value pair extraction
-- Ideal for standardized forms and structured statements
+- inspect the front and back claim images;
+- process the same inputs with all three approaches;
+- normalize every result into one shared claim schema;
+- compare every extracted field against supplied ground truth;
+- review accuracy, completeness, and processing time side by side; and
+- export clean JSON, raw OCR text, and a readable Markdown comparison report.
 
-This comparison helps you understand when to use each approach based on document type, volume, complexity, and cost considerations. Review the implementations to see practical examples of model selection and integration strategies.
+The task is complete when all three pipelines have produced a normalized result,
+the comparison table is visible, and you can explain which approach you would
+select for this workload and why.
+
+The standalone scripts in `statements_processing` remain available for batch
+processing. Run `mistral_doc_intelligence.py` after the comparison if you want
+to generate Markdown files for every claim before continuing to Task 2.
 
 ## Task 2 - Image and Claims Processing
 > **Note:** You must run mistral_doc_intelligence.py before starting this part or copy the contents of the `examples/mistral` folder to `./output/mistral`.
