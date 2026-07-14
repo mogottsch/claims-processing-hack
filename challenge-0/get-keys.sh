@@ -28,42 +28,49 @@ if [ -z "$resourceGroupName" ]; then
     read resourceGroupName
 fi
 
-# Get resource group deployments, find deployments starting with 'Microsoft.Template' and sort them by timestamp
+# Get the newest successful deployment that produced template outputs
 echo "Getting the deployments in '$resourceGroupName'..."
-deploymentName=$(az deployment group list --resource-group $resourceGroupName --query "[?contains(name, 'Microsoft.Template') || contains(name, 'azuredeploy')].{name:name}[0].name" --output tsv)
+deploymentName=$(az deployment group list --resource-group "$resourceGroupName" --query "sort_by([?properties.provisioningState=='Succeeded' && properties.outputs != null], &properties.timestamp)[-1].name" --output tsv)
 if [ $? -ne 0 ]; then
     echo "Error occurred while fetching deployments. Exiting..."
     exit 1
 fi
 
-# Get output parameters from last deployment using Azure CLI queries instead of jq
-echo "Getting the output parameters from the last deployment '$deploymentName' in '$resourceGroupName'..."
+if [ -z "$deploymentName" ]; then
+    echo "No successful deployment with outputs found. Discovering resources by type..."
+fi
+
+# Get output parameters from the selected deployment using Azure CLI queries instead of jq
+echo "Getting the output parameters from deployment '$deploymentName' in '$resourceGroupName'..."
+
+getDeploymentOutput() {
+    if [ -z "$deploymentName" ]; then
+        return
+    fi
+
+    az deployment group show --resource-group "$resourceGroupName" --name "$deploymentName" --query "properties.outputs.$1.value" -o tsv 2>/dev/null || true
+}
 
 # Extract the resource names directly using Azure CLI queries
 echo "Extracting the resource names from the deployment outputs..."
-storageAccountName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.storageAccountName.value" -o tsv 2>/dev/null || echo "")
-logAnalyticsWorkspaceName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.logAnalyticsWorkspaceName.value" -o tsv 2>/dev/null || echo "")
-if [ -z "$logAnalyticsWorkspaceName" ]; then
-    echo "No Log Analytics workspace found. Please enter the workspace name manually:"
-    read logAnalyticsWorkspaceName
-fi
-logAnalyticsWorkspaceId=$(az monitor log-analytics workspace show --resource-group $resourceGroupName --workspace-name $logAnalyticsWorkspaceName --query customerId -o tsv 2>/dev/null || echo "")
-searchServiceName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.searchServiceName.value" -o tsv 2>/dev/null || echo "")
-aiFoundryHubName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.aiFoundryHubName.value" -o tsv 2>/dev/null || echo "")
-aiFoundryProjectName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.aiFoundryProjectName.value" -o tsv 2>/dev/null || echo "")
-keyVaultName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.keyVaultName.value" -o tsv 2>/dev/null || echo "")
-containerRegistryName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.containerRegistryName.value" -o tsv 2>/dev/null || echo "")
-applicationInsightsName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.applicationInsightsName.value" -o tsv 2>/dev/null || echo "")
-documentIntelligenceName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.documentIntelligenceName.value" -o tsv 2>/dev/null || echo "")
-apiManagementName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.apiManagementName.value" -o tsv 2>/dev/null || echo "")
+storageAccountName=$(getDeploymentOutput storageAccountName)
+logAnalyticsWorkspaceName=$(getDeploymentOutput logAnalyticsWorkspaceName)
+searchServiceName=$(getDeploymentOutput searchServiceName)
+aiFoundryHubName=$(getDeploymentOutput aiFoundryHubName)
+aiFoundryProjectName=$(getDeploymentOutput aiFoundryProjectName)
+keyVaultName=$(getDeploymentOutput keyVaultName)
+containerRegistryName=$(getDeploymentOutput containerRegistryName)
+applicationInsightsName=$(getDeploymentOutput applicationInsightsName)
+documentIntelligenceName=$(getDeploymentOutput documentIntelligenceName)
+apiManagementName=$(getDeploymentOutput apiManagementName)
 
 # Extract endpoint URLs
-searchServiceEndpoint=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.searchServiceEndpoint.value" -o tsv 2>/dev/null || echo "")
-aiFoundryHubEndpoint=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.aiFoundryHubEndpoint.value" -o tsv 2>/dev/null || echo "")
-aiFoundryProjectEndpoint=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.aiFoundryProjectEndpoint.value" -o tsv 2>/dev/null || echo "")
-documentIntelligenceEndpoint=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.documentIntelligenceEndpoint.value" -o tsv 2>/dev/null || echo "")
-containerAppEnvironmentName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.containerAppEnvironmentName.value" -o tsv 2>/dev/null || echo "")
-apiManagementGatewayUrl=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.apiManagementGatewayUrl.value" -o tsv 2>/dev/null || echo "")
+searchServiceEndpoint=$(getDeploymentOutput searchServiceEndpoint)
+aiFoundryHubEndpoint=$(getDeploymentOutput aiFoundryHubEndpoint)
+aiFoundryProjectEndpoint=$(getDeploymentOutput aiFoundryProjectEndpoint)
+documentIntelligenceEndpoint=$(getDeploymentOutput documentIntelligenceEndpoint)
+containerAppEnvironmentName=$(getDeploymentOutput containerAppEnvironmentName)
+apiManagementGatewayUrl=$(getDeploymentOutput apiManagementGatewayUrl)
 
 
 
@@ -108,9 +115,15 @@ if [ -z "$storageAccountName" ] || [ -z "$logAnalyticsWorkspaceName" ] || [ -z "
     fi
 fi
 
+if [ -z "$logAnalyticsWorkspaceName" ]; then
+    echo "No Log Analytics workspace found. Please enter the workspace name manually:"
+    read logAnalyticsWorkspaceName
+fi
+logAnalyticsWorkspaceId=$(az monitor log-analytics workspace show --resource-group "$resourceGroupName" --workspace-name "$logAnalyticsWorkspaceName" --query customerId -o tsv 2>/dev/null || echo "")
+
 # Get Cosmos DB service information (better retrieval)
 echo "Getting Cosmos DB service information..."
-cosmosDbAccountName=$(az deployment group show --resource-group $resourceGroupName --name $deploymentName --query "properties.outputs.cosmosDbAccountName.value" -o tsv 2>/dev/null || echo "")
+cosmosDbAccountName=$(getDeploymentOutput cosmosDbAccountName)
 if [ -z "$cosmosDbAccountName" ]; then
     cosmosDbAccountName=$(az cosmosdb list --resource-group $resourceGroupName --query "[0].name" -o tsv 2>/dev/null || echo "")
 fi
