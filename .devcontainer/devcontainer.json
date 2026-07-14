@@ -7,19 +7,18 @@
         "ghcr.io/devcontainers/features/azure-cli:1": {
             "installBicep": true
         },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "ghcr.io/devcontainers/features/docker-in-docker:4": {
             "version": "latest",
             "enableNonRootDocker": "true"
         },
-        "ghcr.io/devcontainers/features/node:1": {
+        "ghcr.io/devcontainers/features/node:2": {
             "version": "lts"
         }
     },
-    "postCreateCommand": "pip3 install --user -r requirements.txt",
+    "postCreateCommand": "python -m pip install --user -r requirements.txt",
     "customizations": {
         "vscode": {
             "extensions": [
-                "github.copilot",
                 "github.copilot-chat",
                 "ms-azuretools.vscode-azurefunctions",
                 "ms-python.autopep8",
