@@ -88,12 +88,12 @@ A powerful multimodal model that can process both text and images with high accu
 GPT-4.1-mini offers an excellent balance between cost, speed, and performance for document processing tasks, making it ideal for processing both policy documents and visual claim evidence.
 
 ## Task 1 - Statement Processing with Multiple AI Approaches 
-Compare three document-processing pipelines on the same claim statement:
+Compare the native output of three document-processing approaches on the same
+claim statement:
 
 1. A multimodal GPT model extracts structured fields directly from both images.
-2. Mistral Document AI performs OCR, followed by the same GPT normalization step.
-3. Azure Document Intelligence performs layout extraction, followed by the same
-   GPT normalization step.
+2. Mistral Document AI returns OCR results as Markdown.
+3. Azure Document Intelligence returns layout extraction as Markdown.
 
 Open [`scripts/statement_processing_comparison.ipynb`](scripts/statement_processing_comparison.ipynb)
 and select the repository's Python environment as the notebook kernel. Run the
@@ -101,13 +101,12 @@ cells in order to:
 
 - inspect the front and back claim images;
 - process the same inputs with all three approaches;
-- normalize every result into one shared claim schema;
-- compare every extracted field against supplied ground truth;
-- review accuracy, completeness, and processing time side by side.
+- inspect each service's native output without a shared post-processing model;
+- identify transcription errors, missing fields, and layout differences; and
+- discuss what additional processing each output would require.
 
-The task is complete when all three pipelines have produced a normalized result,
-the comparison table is visible, and you can explain which approach you would
-select for this workload and why.
+The task is complete when all three outputs are visible and you can explain which
+approach you would select for this workload and why.
 
 The standalone scripts in `statements_processing` remain available for batch
 processing. Run `mistral_doc_intelligence.py` after the comparison if you want
